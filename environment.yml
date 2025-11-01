@@ -1,0 +1,16 @@
+name: pgmd
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - scipy
+  - matplotlib
+  - librosa
+  - pytorch
+  - torchaudio
+  - pip:
+      - -r requirements.txt

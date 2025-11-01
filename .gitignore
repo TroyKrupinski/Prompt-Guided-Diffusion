@@ -1,0 +1,83 @@
+# ============================================
+# Python / Conda / Project Cache
+# ============================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.npy
+*.npz
+*.log
+*.tmp
+*.bak
+
+# Virtual environments
+.env
+.venv/
+env/
+venv/
+pgmd/
+
+# Conda environment files
+conda-meta/
+*.conda
+*.yml~
+
+# Jupyter and VSCode
+.ipynb_checkpoints/
+.vscode/
+.idea/
+*.code-workspace
+
+# ============================================
+# Data / Audio / Generated Files
+# ============================================
+
+# Raw datasets and processed outputs
+data/
+!data/.gitkeep      # keep the folder structure but ignore contents
+
+# Exception for configs inside data (if you ever add any)
+!data/**/*.yaml
+!data/**/*.yml
+
+# Large audio files
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.aac
+*.ogg
+
+# Preprocessed Mel spectrograms and checkpoints
+runs/
+checkpoints/
+wandb/
+*.pt
+*.ckpt
+
+# Figures, plots, model outputs, and generated samples
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.pdf
+output.wav
+output.mp3
+
+# ============================================
+# OS / Editor files
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Misc
+# ============================================
+# Local testing / tmp files
+/tmp/
+tests/__pycache__/

@@ -1,0 +1,11 @@
+# Default training config (edit as needed)
+sample_rate: 22050
+n_mels: 128
+hop_length: 512
+n_fft: 2048
+win_length: 2048
+mel_fmin: 20
+mel_fmax: 11025
+segment_seconds: 10
+learning_rate: 2.0e-4
+checkpoint_every: 1
