@@ -1,5 +1,7 @@
+# src/models/unet_conditioned.py
 import torch
 import torch.nn as nn
+import torch.nn.functional as F  # <-- add this import
 
 class ConvBlock(nn.Module):
     def __init__(self, in_ch, out_ch):
@@ -47,13 +49,17 @@ class UNetDenoiser(nn.Module):
         self.betaB  = nn.Linear(emb_dim, base*4)
 
     def film(self, x, gamma, beta):
-        # x: (B,C,H,W), gamma/beta: (B,C)
         g = gamma.unsqueeze(-1).unsqueeze(-1)
         b = beta.unsqueeze(-1).unsqueeze(-1)
         return x * (1 + g) + b
 
+    def _align(self, y, ref):
+        """Resize y to match spatial size of ref (H,W)."""
+        if y.shape[-2:] != ref.shape[-2:]:
+            y = F.interpolate(y, size=ref.shape[-2:], mode="nearest")
+        return y
+
     def forward(self, x, txt_emb):
-        # x: (B,1,M,T), txt_emb: (B,E)
         # Encoder
         x1 = self.c1(x)
         x1 = self.film(x1, self.gamma1(txt_emb), self.beta1(txt_emb))
@@ -66,9 +72,11 @@ class UNetDenoiser(nn.Module):
 
         # Decoder
         y = self.u2(xb)
+        y = self._align(y, x2)                 # <-- align before cat
         y = torch.cat([y, x2], dim=1)
         y = self.c3(y)
         y = self.u1(y)
+        y = self._align(y, x1)                 # <-- align before cat
         y = torch.cat([y, x1], dim=1)
         y = self.c4(y)
         return torch.sigmoid(self.out(y))
