@@ -53,7 +53,7 @@ prompt_guided_music_diffusion/
 ├─ configs/
 │  └─ default.yaml
 ├─ data/
-│  ├─ wavs/           # put your .wav files here (22.05 kHz mono)
+│  ├─ wavs/           # .wav files here (22.05 kHz mono)
 │  └─ mels/           # preprocessed .npy mel tensors
 ├─ scripts/
 │  └─ preprocess.py   # wav → mel .npy
@@ -83,11 +83,7 @@ prompt_guided_music_diffusion/
 - Training loop w/ checkpoints and sample exports
 - Inference that appends a predicted continuation segment
 
-**Next (after bootstrap works):**
-- Replace denoiser with **diffusion U‑Net** + noise schedule
-- Add **cross‑attention** conditioning (audio+text)
-- Add **HiFi‑GAN** vocoder for WAV synthesis from mels
-- Add **CLAP** alignment score, FAD, and ablations
+
 
 
 ## Dataset Preparation (MAESTRO / FMA)
