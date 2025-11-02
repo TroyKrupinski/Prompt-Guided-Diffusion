@@ -12,22 +12,17 @@ Later, swap the autoencoder core for a **diffusion U‑Net + scheduler** without
 ## Quickstart (Windows / Conda)
 
 ```powershell
-# 1) Clone or unzip
-# If you downloaded the zip, extract it, then:
+# 1) Clone or unzip dataset of your choice
 cd prompt_guided_music_diffusion
 
-# 2) Create env (CUDA optional — CPU works too)
+# 2) Create env 
 conda env create -f environment.yml
 conda activate pgmd
-
-# 3) (Optional) If PyTorch didn't install with CUDA, install your build from:
-# https://pytorch.org/get-started/locally/
 
 # 4) Install package in editable mode (local imports)
 pip install -e .
 
 # 5) Put a few short WAV files (22.05 kHz mono) in data/wavs/
-# You can test with any music snippets you have locally.
 
 # 6) Preprocess → Mel‑spectrograms
 python scripts/preprocess.py --in_dir data/wavs --out_dir data/mels
@@ -39,40 +34,6 @@ python src/train.py --mels_dir data/mels --epochs 5 --batch_size 4 --out_dir run
 python src/infer.py --wav path/to/song.wav --prompt "slower tempo with mellow piano" --out out.wav
 ```
 
-## Repo Layout
-
-```
-prompt_guided_music_diffusion/
-├─ README.md
-├─ requirements.txt
-├─ environment.yml
-├─ pyproject.toml
-├─ setup.cfg
-├─ .gitignore
-├─ LICENSE
-├─ configs/
-│  └─ default.yaml
-├─ data/
-│  ├─ wavs/           # .wav files here (22.05 kHz mono)
-│  └─ mels/           # preprocessed .npy mel tensors
-├─ scripts/
-│  └─ preprocess.py   # wav → mel .npy
-└─ src/
-   ├─ __init__.py
-   ├─ train.py
-   ├─ infer.py
-   ├─ audio/
-   │  ├─ __init__.py
-   │  └─ utils.py
-   ├─ models/
-   │  ├─ __init__.py
-   │  ├─ audio_encoder.py     # small CNN over mels
-   │  ├─ text_encoder.py      # DistilBERT wrapper
-   │  └─ unet_conditioned.py  # small U‑Net "denoiser" with text conditioning
-   └─ eval/
-      ├─ __init__.py
-      └─ metrics.py           # MSE, cosine similarity stubs
-```
 
 ## What’s Included vs. What’s Next
 
