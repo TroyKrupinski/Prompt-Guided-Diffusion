@@ -14,6 +14,7 @@ HOP = 512
 WIN = 2048
 FMIN = 20
 FMAX = SR // 2  # 11025
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def rms(x, eps=1e-8):
     return float(np.sqrt(np.mean(np.square(x)) + eps))
