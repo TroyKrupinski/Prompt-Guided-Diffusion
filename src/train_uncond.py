@@ -2,6 +2,7 @@ import argparse, os, numpy as np, torch, torch.nn as nn
 from pathlib import Path
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
+from utils_logging import append_csv, plot_curve_from_csv
 
 from models.unet_conditioned import UNetDenoiser  # we reuse same U-Net
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -26,6 +27,8 @@ class MelDataset(Dataset):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--plot", action="store_true")
+
     ap.add_argument("--mels_dir", type=str, required=True)
     ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--batch_size", type=int, default=4)
@@ -61,10 +64,16 @@ def main():
             total += loss.item() * noisy.size(0)
         avg = total / len(ds)
         print(f"Uncond Epoch {epoch} | L1: {avg:.4f}")
+        append_csv(Path(args.out_dir) / "loss.csv", {"epoch": epoch, "L1": avg}, header_order=["epoch","L1"])
         torch.save(
             {"model": model.state_dict(), "epoch": epoch},
             str(Path(args.out_dir) / f"ckpt_uncond_{epoch}.pt")
         )
+    if args.plot:
+        plot_curve_from_csv(Path(args.out_dir) / "loss.csv", "epoch", "L1",
+                            Path(args.out_dir) / "training_curve.png",
+                            title="Unconditional L1 vs Epoch")
+
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,7 @@ import argparse, os, numpy as np, torch, torch.nn as nn
 from pathlib import Path
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
+from utils_logging import append_csv, plot_curve_from_csv
 
 from models.unet_diffusion import DiffusionUNet
 from models.text_encoder import DistilBERTEncoder
@@ -37,6 +38,7 @@ def main():
     ap.add_argument("--lr", type=float, default=2e-4)
     ap.add_argument("--out_dir", type=str, default="runs/diffusion_fma_hifigan")
     ap.add_argument("--prompt", type=str, default="energetic rock")
+    ap.add_argument("--plot", action="store_true")
     ap.add_argument("--timesteps", type=int, default=1000)
     args = ap.parse_args()
 
@@ -86,11 +88,17 @@ def main():
 
         avg = total / len(ds)
         print(f"Epoch {epoch} | eps MSE: {avg:.6f}")
+        append_csv(Path(args.out_dir) / "eps_mse.csv", {"epoch": epoch, "eps_mse": avg}, header_order=["epoch","eps_mse"])
 
         torch.save(
             {"model": model.state_dict(), "txt": txt.state_dict(), "epoch": epoch},
             str(out_dir / f"ckpt_diff_hifigan_{epoch}.pt"),
         )
+    if args.plot:
+        plot_curve_from_csv(Path(args.out_dir) / "eps_mse.csv", "epoch", "eps_mse",
+                            Path(args.out_dir) / "training_curve.png",
+                            title="Diffusion(HiFiGAN) eps-MSE vs Epoch")
+
 
 if __name__ == "__main__":
     main()

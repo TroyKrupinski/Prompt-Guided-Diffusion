@@ -1,6 +1,7 @@
 import argparse, os, numpy as np, torch, soundfile as sf, librosa
 from pathlib import Path
 from scipy.ndimage import median_filter
+from utils_logging import ensure_dir, save_mel_png_from_wav
 
 from models.unet_conditioned import UNetDenoiser
 from models.text_encoder import DistilBERTEncoder
@@ -33,6 +34,7 @@ def cosine_xfade(a_tail, b_head):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--log_dir", type=str, default="results/vis", help="Folder for mel PNGs")
     ap.add_argument("--wav", type=str, required=True)
     ap.add_argument("--prompt", type=str, required=True)
     ap.add_argument("--ckpt", type=str, required=True)
@@ -155,6 +157,12 @@ def main():
 
     print(f"[compare] Wrote unconditioned: {out_uncond}")
     print(f"[compare] Wrote conditioned:   {out_cond}")
+    vis_dir = Path(args.log_dir)
+    ensure_dir(vis_dir)
+    save_mel_png_from_wav(args.wav, vis_dir / "orig.png", n_mels=128)
+    save_mel_png_from_wav(str(out_uncond), vis_dir / "baseline_uncond.png", n_mels=128)
+    save_mel_png_from_wav(str(out_cond),   vis_dir / "baseline_cond.png",   n_mels=128)
+    print(f"[compare] Wrote mel PNGs to: {vis_dir}")
 
 if __name__ == "__main__":
     main()

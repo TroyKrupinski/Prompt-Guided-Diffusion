@@ -9,6 +9,8 @@ from models.unet_diffusion import DiffusionUNet
 from models.text_encoder import DistilBERTEncoder
 from diffusion.scheduler import DiffusionScheduler
 from vocoder.hifigan import HiFiGANVocoder
+from utils_logging import ensure_dir, save_mel_png_from_wav
+
 
 SR = 22050           # HiFi-GAN sampling rate (UNIVERSAL_V1)
 N_MELS_DIFF = 80     # diffusion model trained on 80-mel HiFi-GAN log mels
@@ -17,6 +19,7 @@ SEG_FRAMES = 860     # same segment length used in train_diffusion_hifigan
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--log_dir", type=str, default="results/vis_diff")
     ap.add_argument("--wav", type=str, required=True,
                     help="Source WAV file to continue")
     ap.add_argument("--prompt", type=str, required=True,
@@ -114,6 +117,12 @@ def main():
     sf.write(str(out_path), y_out, SR)
 
     print("[infer_diff] Wrote", out_path, "| duration:", len(y_out) / SR)
+    vis_dir = Path(args.log_dir)
+    ensure_dir(vis_dir)
+    # original and final concatenated output
+    save_mel_png_from_wav(args.wav, vis_dir / "orig.png", n_mels=80)  # rough view in 80 mel bins
+    save_mel_png_from_wav(str(out_path), vis_dir / "diffusion_cond.png", n_mels=80)
+    print(f"[infer_diff] Wrote mel PNGs to: {vis_dir}")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,8 @@ from torch.utils.data import Dataset, DataLoader
 from models.unet_diffusion import DiffusionUNet
 from models.text_encoder import DistilBERTEncoder
 from diffusion.scheduler import DiffusionScheduler
+from utils_logging import append_csv, plot_curve_from_csv
+
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -35,6 +37,7 @@ def main():
     ap.add_argument("--out_dir", type=str, default="runs/diffusion_fma")
     ap.add_argument("--prompt", type=str, default="energetic rock")
     ap.add_argument("--timesteps", type=int, default=1000)
+    ap.add_argument("--plot", action="store_true")
     args = ap.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -83,10 +86,15 @@ def main():
 
         avg = total / len(ds)
         print(f"Epoch {epoch} | eps MSE: {avg:.6f}")
+        append_csv(Path(args.out_dir) / "eps_mse.csv", {"epoch": epoch, "eps_mse": avg}, header_order=["epoch","eps_mse"])
         torch.save(
             {"model": model.state_dict(), "txt": txt.state_dict(), "epoch": epoch},
             str(out_dir / f"ckpt_diff_{epoch}.pt")
         )
+    if args.plot:
+        plot_curve_from_csv(Path(args.out_dir) / "eps_mse.csv", "epoch", "eps_mse",
+                            Path(args.out_dir) / "training_curve.png",
+                            title="Diffusion eps-MSE vs Epoch")
 
 if __name__ == "__main__":
     main()
