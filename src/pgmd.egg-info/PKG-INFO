@@ -1,22 +1,23 @@
 Metadata-Version: 2.4
 Name: pgmd
-Version: 0.0.1
+Version: 0.0.2
 Summary: Prompt-Guided Music Diffusion (bootstrap)
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Dynamic: license-file
 
+# Very Outdated!! Will updated soon. 
+
 # Prompt‑Guided Diffusion for Music Continuations (Bootstrap)
 
-This repository is a **runnable starter** for your CSCE 5218 project.
+This repository is a **runnable starter** CSCE 5218 project.
 It gives you an **end‑to‑end path** TODAY (Windows‑friendly):
 - Create a Conda env
 - Preprocess WAVs → Mel‑spectrograms
 - Train a **text‑conditioned spectrogram autoencoder** (bootstrap)
 - Run inference to produce a **continuation stub** (concatenate and denoise)
 
-Later, swap the autoencoder core for a **diffusion U‑Net + scheduler** without changing data & logging.
 
 ## Quickstart (Windows / Conda)
 
@@ -44,20 +45,8 @@ python src/infer.py --wav path/to/song.wav --prompt "slower tempo with mellow pi
 ```
 
 
-## What’s Included vs. What’s Next
-
-**Included (runnable today):**
-- Mel pipeline with `librosa`
-- Lightweight **U‑Net denoiser** that learns to reconstruct clean mels from noisy mels
-- **Text conditioning** via DistilBERT pooled embeddings (late fusion)
-- Training loop w/ checkpoints and sample exports
-- Inference that appends a predicted continuation segment
-
-
-
 
 ## Dataset Preparation (MAESTRO / FMA)
-
 **MAESTRO → WAV 22.05kHz mono**
 ```bash
 python scripts/prepare_datasets.py maestro --src /path/to/maestro-v3.0/ --dst data/maestro/wavs
@@ -75,4 +64,3 @@ python scripts/preprocess.py --in_dir data/fma/wavs --out_dir data/fma/mels
 python scripts/prepare_datasets.py fma_prompts --tracks_csv /path/to/tracks.csv --genres_csv /path/to/genres.csv --out data/fma/prompts.jsonl
 ```
 
-> Tip: You can train separate runs on MAESTRO and FMA to compare prompt adherence and continuity across domains.
