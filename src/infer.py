@@ -1,3 +1,5 @@
+#Mostly deprecated
+
 import argparse, os, numpy as np, torch, soundfile as sf, librosa
 import torch.nn.functional as F
 from pathlib import Path
