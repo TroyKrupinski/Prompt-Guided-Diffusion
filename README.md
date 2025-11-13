@@ -26,21 +26,21 @@ Learns to follow text prompts via mel-space transformations
 Produces higher fidelity continuations
 
 
-# 1. Clone this repository
+1. Clone this repository
 git clone https://github.com/TroyKrupinski/Prompt-Guided-Diffusion
 cd Prompt-Guided-Diffusion
 
-# 2. Clone HiFi-GAN (UNIVERSAL V1 vocoder)
+2. Clone HiFi-GAN (UNIVERSAL V1 vocoder)
 git clone https://github.com/jik876/hifi-gan.git
 # Make sure UNIVERSAL_V1 exists:
 # hifi-gan/hifigan__universal_v1/config.json
 # hifi-gan/hifigan__universal_v1/g_02500000
 
-# 3. Create and activate environment
+3. Create and activate environment
 conda env create -f environment.yml
 conda activate pgmd
 
-# 4. Install project locally
+4. Install project locally
 pip install -e .
 
 
