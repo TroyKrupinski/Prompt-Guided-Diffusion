@@ -1,69 +1,131 @@
-# Prompt‑Guided Diffusion for Music Continuations (Bootstrap)
+Prompt-Guided Diffusion for Music Continuation
 
-This repository is a **runnable starter** for your CSCE 5218 project.
-It gives you an **end‑to‑end path** TODAY (Windows‑friendly):
-- Create a Conda env
-- Preprocess WAVs → Mel‑spectrograms
-- Train a **text‑conditioned spectrogram autoencoder** (bootstrap)
-- Run inference to produce a **continuation stub** (concatenate and denoise)
+This repository contains a full text-conditioned music continuation system built from scratch.
+It includes two pipelines trained on the FMA-Medium (22GB) dataset:
 
-Later, swap the autoencoder core for a **diffusion U‑Net + scheduler** without changing data & logging.
+Pipeline A — Baseline
 
-## Quickstart (Windows / Conda)
+Conditional 2D UNet denoiser
 
-```powershell
-# 1) Clone or unzip dataset of your choice
-cd prompt_guided_music_diffusion
+128-bin log-mels
 
-# 2) Create env 
+Griffin-Lim mel→audio
+
+Learns to map noisy → clean mels conditioned on text prompts
+
+Pipeline B — Diffusion + HiFi-GAN (True Diffusion)
+
+Conditional Diffusion U-Net
+
+80-bin HiFi-GAN log-mels
+
+UNIVERSAL_V1 HiFi-GAN vocoder
+
+Learns to follow text prompts via mel-space transformations
+
+Produces higher fidelity continuations
+
+
+# 1. Clone this repository
+git clone https://github.com/TroyKrupinski/Prompt-Guided-Diffusion
+cd Prompt-Guided-Diffusion
+
+# 2. Clone HiFi-GAN (UNIVERSAL V1 vocoder)
+git clone https://github.com/jik876/hifi-gan.git
+# Make sure UNIVERSAL_V1 exists:
+# hifi-gan/hifigan__universal_v1/config.json
+# hifi-gan/hifigan__universal_v1/g_02500000
+
+# 3. Create and activate environment
 conda env create -f environment.yml
 conda activate pgmd
 
-# 4) Install package in editable mode (local imports)
+# 4. Install project locally
 pip install -e .
 
-# 5) Put a few short WAV files (22.05 kHz mono) in data/wavs/
-
-# 6) Preprocess → Mel‑spectrograms
-python scripts/preprocess.py --in_dir data/wavs --out_dir data/mels
-
-# 7) Train bootstrap model
-python src/train.py --mels_dir data/mels --epochs 5 --batch_size 4 --out_dir runs/exp1
-
-# 8) Inference: generate a continuation stub for an input WAV + text prompt
-python src/infer.py --wav path/to/song.wav --prompt "slower tempo with mellow piano" --out out.wav
-```
 
 
-## What’s Included vs. What’s Next
+Dataset prep:
+Convert MP3 → WAV (22.05kHz mono)
+python scripts/prepare_datasets.py fma --src data/fma_medium --dst data/fma/wavs_medium --sr 22050
+Baseline Mel-Spectrograms (128 bins)
+python scripts/preprocess.py --in_dir data/fma/wavs_medium --out_dir data/fma/mels_medium
+Diffusion Mel-Spectrograms (80-bin HiFi-GAN log-mels)
+python scripts/preprocess_hifigan_mels.py --in_dir data/fma/wavs_medium --out_dir data/fma/mels_medium_hifigan --config hifi-gan/hifigan__universal_v1/config.json
 
-**Included (runnable today):**
-- Mel pipeline with `librosa`
-- Lightweight **U‑Net denoiser** that learns to reconstruct clean mels from noisy mels
-- **Text conditioning** via DistilBERT pooled embeddings (late fusion)
-- Training loop w/ checkpoints and sample exports
-- Inference that appends a predicted continuation segment
+Pipeline A:
+python src/train.py --mels_dir data/fma/mels_medium --epochs 15 --batch_size 4 --lr 2e-4 --out_dir runs/fma_medium_baseline --plot
+Inference — conditioned + unconditioned continuations
+python src/compare_cond_uncond.py --wav data/fma/wavs_medium/000/000002.wav --prompt "increase BPM with energetic drums" --ckpt runs/fma_medium_baseline/ckpt_15.pt --out_prefix results/baseline_000002 --log_dir results/vis_baseline_000002
+
+This produces:
+
+baseline_000002_cond.wav
+
+baseline_000002_uncond.wav
+
+Spectrogram visualizations
+
+Pipeline B — Diffusion + HiFi-GAN Vocoder
+python src/train_diffusion_hifigan.py --mels_dir data/fma/mels_medium_hifigan --epochs 15 --batch_size 4 --lr 2e-4 --out_dir runs/fma_medium_diffusion_hifigan --timesteps 1000 --plot
+Inference — text-conditioned HiFi-GAN continuation
+python src/infer_diffusion.py --wav data/fma/wavs_medium/000/000002.wav --prompt "add reverb and ambient space" --ckpt runs/fma_medium_diffusion_hifigan/ckpt_diff_hifigan_15.pt --hifigan_config hifi-gan/hifigan__universal_v1/config.json --hifigan_ckpt hifi-gan/hifigan__universal_v1/g_02500000 --out results/diffusion_reverb_000002.wav --steps 100
+
+Evaluation & Metrics
+
+MSE + COSINE
+python src/eval/eval_reconstruction.py --wav data/fma/wavs_medium/000/000002.wav --ckpt runs/fma_medium_baseline/ckpt_15.pt
+2. CLAP Audio-Text Alignment
+
+Baseline:
+python src/eval/eval_clap.py --wav results/baseline_000002_cond.wav --prompt "increase BPM with energetic drums" | Tee-Object results/clap_baseline_increaseBPM_000002_cond.txt
+Diffusion:
+python src/eval/eval_clap.py --wav results/diffusion_increaseBPM_000002.wav --prompt "increase BPM with energetic drums" | Tee-Object results/clap_diffusion_increaseBPM_000002.txt
+3. Prompt-Effect Consistency (baseline or diffusion)
+
+python src/eval/eval_prompt_effect.py --mels_dir data/fma/mels_medium --ckpt runs/fma_medium_baseline/ckpt_15.pt --prompt_a "increase BPM" --prompt_b "decrease BPM" --limit 20
+4. CLAP Bar Chart (visual comparison)
+python scripts/make_clap_barplot.py --results_dir results --out_path results/clap_alignment_barplot.png
+
+5. Training Curves
+Baseline
+runs/fma_medium_baseline/training_curve.png
+Diffusion:
+runs/fma_medium_diffusion_hifigan/training_curve.png
+Prompt-Guided-Diffusion/
+│
+├── data/
+│   └── fma/
+│       ├── wavs_medium/
+│       ├── mels_medium/
+│       └── mels_medium_hifigan/
+│
+├── hifi-gan/
+│   └── hifigan__universal_v1/
+│       ├── config.json
+│       └── g_02500000
+│
+├── runs/
+│   ├── fma_medium_baseline/
+│   └── fma_medium_diffusion_hifigan/
+│
+├── results/
+│   ├── baseline_*.wav
+│   ├── diffusion_*.wav
+│   └── clap_*.txt
+│
+├── scripts/
+│   ├── preprocess.py
+│   ├── preprocess_hifigan_mels.py
+│   ├── prepare_datasets.py
+│   └── make_clap_barplot.py
+│
+└── src/
+    ├── train.py
+    ├── train_diffusion_hifigan.py
+    ├── compare_cond_uncond.py
+    ├── infer_diffusion.py
+    ├── eval/
+    └── models/
 
 
-
-
-## Dataset Preparation (MAESTRO / FMA)
-
-**MAESTRO → WAV 22.05kHz mono**
-```bash
-python scripts/prepare_datasets.py maestro --src /path/to/maestro-v3.0/ --dst data/maestro/wavs
-python scripts/preprocess.py --in_dir data/maestro/wavs --out_dir data/maestro/mels
-```
-
-**FMA → WAV 22.05kHz mono (small/medium/large)**
-```bash
-python scripts/prepare_datasets.py fma --src /path/to/fma_small/ --dst data/fma/wavs
-python scripts/preprocess.py --in_dir data/fma/wavs --out_dir data/fma/mels
-```
-
-**FMA prompts from metadata**
-```bash
-python scripts/prepare_datasets.py fma_prompts --tracks_csv /path/to/tracks.csv --genres_csv /path/to/genres.csv --out data/fma/prompts.jsonl
-```
-
-> Tip: You can train separate runs on MAESTRO and FMA to compare prompt adherence and continuity across domains.
