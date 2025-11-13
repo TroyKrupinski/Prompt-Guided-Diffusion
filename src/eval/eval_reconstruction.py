@@ -72,8 +72,22 @@ if __name__ == "__main__":
     ap.add_argument("--ckpt", type=str, required=True)
     ap.add_argument("--prompt", type=str, default="energetic rock")
     ap.add_argument("--use_text", action="store_true")
-    args = ap.parse_args()
+    ap.add_argument("--out", type=str, default=None, help="Optional file to save output metrics")
 
+    args = ap.parse_args()
+    
     mse_val, cos_val = run_eval(args.mels_dir, args.ckpt, args.prompt, use_text=args.use_text)
     print(f"MSE: {mse_val:.6f}")
     print(f"Cosine similarity: {cos_val:.4f}")
+    if args.out:
+        try:
+            with open(args.out, "w") as f:
+                # Write available metrics safely
+                if 'mse' in locals():
+                    f.write(f"MSE: {mse:.6f}\n")
+                if 'cos' in locals():
+                    f.write(f"Cosine similarity: {cos:.6f}\n")
+                f.write(f"Prompt: {args.prompt}\n")
+            print(f"\nResults saved to {args.out}")
+        except Exception as e:
+            print(f"Failed to write output file: {e}")
